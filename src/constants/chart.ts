@@ -10,6 +10,8 @@ export const MAX_HISTORY_SECONDS = 7200
 
 // Інтервали в секундах
 export const INTERVAL_SECONDS: Record<string, number> = {
+  '1s': 1,
+  '5s': 5,
   '1m': 60,
   '5m': 300,
   '15m': 900,

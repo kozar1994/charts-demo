@@ -42,10 +42,13 @@ const fetchKlines = async (interval: string): Promise<Array<Tick>> => {
       },
     )
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!response.data || !response.data.data) {
       console.warn('fetchKlines: No data returned from API', response.data)
       return []
     }
+
+    console.log('response.data.data[0]', response.data.data)
 
     console.log('🔍 RAW API Response:', {
       interval,

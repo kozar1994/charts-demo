@@ -14,11 +14,13 @@ import type { Tick } from '@/types/chart'
 export const useMockRealtimeSocket = (
   onUpdate: (tick: Tick) => void,
   interval = 1000,
-  basePrice = 50000,
-  volatility = 0.001,
+  basePrice = 1000, // Larger base price
+  volatility = 0.04, // Doubled volatility to 4%
 ) => {
   const onUpdateRef = useRef(onUpdate)
   const currentPriceRef = useRef(basePrice)
+  const trendDirectionRef = useRef(1) // 1 for up, -1 for down
+  const trendDurationRef = useRef(0) // Remaining ticks for current trend
 
   useEffect(() => {
     onUpdateRef.current = onUpdate
@@ -28,8 +30,30 @@ export const useMockRealtimeSocket = (
     console.log('✅ Mock socket connected')
 
     const generateTick = (): Tick => {
-      // Generate random price movement
-      const change = (Math.random() - 0.5) * 2 * volatility
+      // Manage trend
+      if (trendDurationRef.current <= 0) {
+        // Pick new trend direction
+        trendDirectionRef.current = Math.random() > 0.5 ? 1 : -1
+        // Pick duration (20-50 ticks)
+        trendDurationRef.current = Math.floor(Math.random() * 30) + 20
+        console.log(
+          `📈 New trend: ${trendDirectionRef.current > 0 ? 'UP' : 'DOWN'} for ${trendDurationRef.current} ticks`,
+        )
+      }
+      trendDurationRef.current--
+
+      // Dynamic Volatility: 20% chance of a "spike" (2x movement)
+      const isSpike = Math.random() < 0.2
+      const volatilityMultiplier = isSpike ? 2 : 1
+
+      const currentVolatility = volatility * volatilityMultiplier
+      const currentTrendBias =
+        0.015 * trendDirectionRef.current * volatilityMultiplier // Increased base trend
+
+      // Calculate price movement
+      const noise = (Math.random() - 0.5) * currentVolatility
+      const change = currentTrendBias + noise
+
       const prevPrice = currentPriceRef.current
       const newPrice = prevPrice * (1 + change)
       currentPriceRef.current = newPrice
@@ -37,13 +61,16 @@ export const useMockRealtimeSocket = (
       // Generate random high/low based on open/close
       const open = new Decimal(prevPrice)
       const close = new Decimal(newPrice)
-      const high = Decimal.max(open, close).times(1 + Math.random() * 0.0005)
-      const low = Decimal.min(open, close).times(1 - Math.random() * 0.0005)
 
-      // Generate random volume between 0.1 and 10
+      // Wicks: Base 5%, Spikes up to 10%
+      const wickFactor = 0.05 * volatilityMultiplier
+      const high = Decimal.max(open, close).times(
+        1 + Math.random() * wickFactor,
+      )
+      const low = Decimal.min(open, close).times(1 - Math.random() * wickFactor)
+
+      // Random volume
       const volume = Math.random() * 9.9 + 0.1
-
-      // Generate random trades count
       const trades = Math.floor(Math.random() * 50) + 1
 
       const tick: Tick = {
@@ -52,7 +79,7 @@ export const useMockRealtimeSocket = (
         high: high,
         low: low,
         close: close,
-        mark: close, // Mock mark price same as close
+        mark: close,
         volume: new Decimal(volume),
         trades: trades,
       }
@@ -60,7 +87,8 @@ export const useMockRealtimeSocket = (
       console.log('📥 Mock tick:', {
         time: tick.time,
         price: tick.close.toNumber(),
-        volume: tick.volume.toNumber(),
+        trend: trendDirectionRef.current > 0 ? 'UP' : 'DOWN',
+        remaining: trendDurationRef.current,
       })
 
       return tick

@@ -36,7 +36,7 @@ interface TradingChartUIProps {
 }
 
 type ChartType = 'candlestick' | 'line'
-type TimeInterval = '1m' | '5m' | '15m' | '30m' | '1h' | '1d'
+type TimeInterval = '5s' | '1m' | '5m' | '15m' | '30m' | '1h' | '1d'
 
 export const TradingChartUI = ({
   initialData,
@@ -404,6 +404,7 @@ export const TradingChartUI = ({
               <SelectValue placeholder="Interval" />
             </SelectTrigger>
             <SelectContent className="border-neutral-700 bg-neutral-800 text-neutral-200">
+              <SelectItem value="5s">5 sec</SelectItem>
               <SelectItem value="1m">1 min</SelectItem>
               <SelectItem value="5m">5 min</SelectItem>
               <SelectItem value="15m">15 min</SelectItem>
