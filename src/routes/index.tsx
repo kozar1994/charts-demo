@@ -1,10 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ComponentExample } from "@/components/component-example";
+import { createFileRoute } from '@tanstack/react-router'
+import { TradingChartContainer } from '@/components/ui/trading-chart/trading-chart-container'
 
-export const Route = createFileRoute("/")({ component: App });
+export const Route = createFileRoute('/')({ component: App })
 
 function App() {
-return (
-  <ComponentExample />
-);
+  return (
+    <div>
+      <TradingChartContainer />
+    </div>
+  )
 }
