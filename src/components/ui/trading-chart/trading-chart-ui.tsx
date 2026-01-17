@@ -68,6 +68,10 @@ export const TradingChartUI = ({
   // Track last candle interval time (not individual tick time)
   const lastCandleTimeRef = useRef<number>(0)
 
+  // Track interval and demo mode to only reset view on change
+  const prevIntervalRef = useRef<TimeInterval | null>(null)
+  const prevIsDemoRef = useRef<boolean | null>(null)
+
   // Initialization: apply initial data
   // We avoid resetting the view (fitContent) on every update to allow scrolling
   useEffect(() => {
@@ -114,10 +118,14 @@ export const TradingChartUI = ({
       lineSeriesRef.current.setData(formattedLine)
       volumeSeriesRef.current.setData(formattedVolume)
 
-      // TODO: UPDATE THIS
       // Force chart to show only the last VISIBLE_CANDLES_COUNT candles
       // This ensures we snap to the newest data (right side) on interval switch
-      if (initialData.length > 0) {
+      // We ONLY do this if the interval or isDemo mode has changed,
+      // or if it's the very first time we have data.
+      const hasIntervalChanged = prevIntervalRef.current !== interval
+      const hasDemoChanged = prevIsDemoRef.current !== isDemo
+
+      if (initialData.length > 0 && (hasIntervalChanged || hasDemoChanged)) {
         const dataLength = initialData.length
         const from = Math.max(0, dataLength - VISIBLE_CANDLES_COUNT)
         const to = dataLength // Show up to the very end
@@ -131,6 +139,10 @@ export const TradingChartUI = ({
             })
           }
         }, 0)
+
+        // Update refs
+        prevIntervalRef.current = interval
+        prevIsDemoRef.current = isDemo
       }
     }
   }, [initialData])
