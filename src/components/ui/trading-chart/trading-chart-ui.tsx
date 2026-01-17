@@ -17,6 +17,7 @@ import {
 import type { IChartApi, Time } from 'lightweight-charts'
 
 import type { ChartCandle } from '@/types/chart'
+import { VISIBLE_CANDLES_COUNT } from '@/constants/chart'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -113,18 +114,26 @@ export const TradingChartUI = ({
       lineSeriesRef.current.setData(formattedLine)
       volumeSeriesRef.current.setData(formattedVolume)
 
-      // Only fit content if chart was empty effectively (e.g. first load)
-      // OR if we want to force it.
-      // We'll move fitContent to a separate effect dependent on `interval`.
+      // TODO: UPDATE THIS
+      // Force chart to show only the last VISIBLE_CANDLES_COUNT candles
+      // This ensures we snap to the newest data (right side) on interval switch
+      if (initialData.length > 0) {
+        const dataLength = initialData.length
+        const from = Math.max(0, dataLength - VISIBLE_CANDLES_COUNT)
+        const to = dataLength // Show up to the very end
+
+        // Small timeout to ensure internal chart state is updated
+        setTimeout(() => {
+          if (chartRef.current) {
+            chartRef.current.timeScale().setVisibleLogicalRange({
+              from,
+              to,
+            })
+          }
+        }, 0)
+      }
     }
   }, [initialData])
-
-  // Separate effect to reset view when Interval (or demo mode) changes
-  useEffect(() => {
-    if (chartRef.current) {
-      chartRef.current.timeScale().fitContent()
-    }
-  }, [interval, isDemo])
 
   // Real-time updates from aggregated candle
   useEffect(() => {
