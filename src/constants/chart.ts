@@ -3,7 +3,7 @@
  */
 
 // Скільки свічок завжди показувати на графіку
-export const VISIBLE_CANDLES_COUNT = 120
+export const VISIBLE_CANDLES_COUNT = 101
 
 // Максимальна історія операцій в секундах (2 години)
 export const MAX_HISTORY_SECONDS = 14400

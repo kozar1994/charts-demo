@@ -69,7 +69,13 @@ export const TradingChartUI = ({
   const lastCandleTimeRef = useRef<number>(0)
 
   // Initialization: apply initial data
+  // We avoid resetting the view (fitContent) on every update to allow scrolling
   useEffect(() => {
+    // Determine if we should treat this as a "reset" (new interval or first load)
+    // For now, if initialData changes significantly in structure, we reset.
+    // Ideally, we depend on `interval` for resets.
+
+    // We update the local state for stats
     setChartData(initialData)
     if (initialData.length > 0) {
       lastCandleTimeRef.current = initialData[initialData.length - 1].time
@@ -80,39 +86,46 @@ export const TradingChartUI = ({
       lineSeriesRef.current &&
       volumeSeriesRef.current
     ) {
-      candlestickSeriesRef.current.setData(
-        initialData.map((d: ChartCandle) => ({
-          time: d.time as Time,
-          open: d.open,
-          high: d.high,
-          low: d.low,
-          close: d.close,
-        })),
-      )
+      const formattedCandles = initialData.map((d: ChartCandle) => ({
+        time: d.time as Time,
+        open: d.open,
+        high: d.high,
+        low: d.low,
+        close: d.close,
+      }))
 
-      lineSeriesRef.current.setData(
-        initialData.map((d: ChartCandle) => ({
-          time: d.time as Time,
-          value: d.close,
-        })),
-      )
+      const formattedLine = initialData.map((d: ChartCandle) => ({
+        time: d.time as Time,
+        value: d.close,
+      }))
 
-      volumeSeriesRef.current.setData(
-        initialData.map((d: ChartCandle, index: number) => ({
+      const formattedVolume = initialData.map(
+        (d: ChartCandle, index: number) => ({
           time: d.time as Time,
           value: d.volume,
           color:
             index > 0 && d.close >= initialData[index - 1].close
               ? 'rgba(34, 197, 94, 0.4)'
               : 'rgba(239, 68, 68, 0.4)',
-        })),
+        }),
       )
 
-      if (chartRef.current) {
-        chartRef.current.timeScale().fitContent()
-      }
+      candlestickSeriesRef.current.setData(formattedCandles)
+      lineSeriesRef.current.setData(formattedLine)
+      volumeSeriesRef.current.setData(formattedVolume)
+
+      // Only fit content if chart was empty effectively (e.g. first load)
+      // OR if we want to force it.
+      // We'll move fitContent to a separate effect dependent on `interval`.
     }
   }, [initialData])
+
+  // Separate effect to reset view when Interval (or demo mode) changes
+  useEffect(() => {
+    if (chartRef.current) {
+      chartRef.current.timeScale().fitContent()
+    }
+  }, [interval, isDemo])
 
   // Real-time updates from aggregated candle
   useEffect(() => {
@@ -222,26 +235,10 @@ export const TradingChartUI = ({
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: {
-          color: '#6b7280',
-          width: 1,
-          style: 3,
-          labelBackgroundColor: '#374151',
-        },
-        horzLine: {
-          color: '#6b7280',
-          width: 1,
-          style: 3,
-          labelBackgroundColor: '#374151',
-        },
       },
       leftPriceScale: {
         visible: true,
         borderColor: '#2a2a2a',
-        scaleMargins: {
-          top: 0.1,
-          bottom: 0.2,
-        },
       },
       rightPriceScale: {
         visible: false,
@@ -250,6 +247,15 @@ export const TradingChartUI = ({
         borderColor: '#2a2a2a',
         timeVisible: true,
         secondsVisible: false,
+      },
+      handleScale: {
+        mouseWheel: false,
+      },
+      handleScroll: {
+        mouseWheel: false,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
       },
     })
 
@@ -271,10 +277,6 @@ export const TradingChartUI = ({
       color: '#3b82f6',
       lineWidth: 2,
       visible: chartType === 'line',
-      crosshairMarkerVisible: true,
-      crosshairMarkerRadius: 4,
-      crosshairMarkerBorderColor: '#3b82f6',
-      crosshairMarkerBackgroundColor: '#ffffff',
       priceScaleId: 'left',
     })
     lineSeriesRef.current = lineSeries
@@ -290,7 +292,7 @@ export const TradingChartUI = ({
 
     chart.priceScale('volume').applyOptions({
       scaleMargins: {
-        top: 0.8, // Push volume down to bottom 20%
+        top: 0.8,
         bottom: 0,
       },
     })

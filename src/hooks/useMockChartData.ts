@@ -107,14 +107,18 @@ export const useMockChartData = (
     const now = Math.floor(Date.now() / 1000)
     const initialTicks: Array<Tick> = []
 
+    // Generate 24 hours of history (approx 86400 ticks) to ensure chart is filled
+    const tickCount = 10000
+    const startTime = now - tickCount
+
     const startingPrice = 50000
-    const startTime = now - 9999999
 
     // Create first tick
     const currentPrice = startingPrice
     const firstOpen = new Decimal(currentPrice)
     const firstClose = firstOpen.times(1 + (Math.random() - 0.5) * 0.001)
 
+    // Base loop state
     let lastTick: Tick = {
       time: startTime,
       open: firstOpen,
@@ -132,7 +136,7 @@ export const useMockChartData = (
     let currentTrendDur = Math.floor(Math.random() * 60) + 30
     let currentVolatility = 0.8 + Math.random() * 0.4 // 0.8 to 1.2
 
-    for (let i = 1; i < 555; i++) {
+    for (let i = 1; i < tickCount; i++) {
       // Change trend periodically
       if (currentTrendDur <= 0) {
         currentTrendDir = Math.random() > 0.5 ? 1 : -1
@@ -210,8 +214,13 @@ export const useMockChartData = (
         const last = prev[prev.length - 1]
 
         if (newTick.time > last.time) {
-          // Keep only last ~600 ticks to prevent memory issues
-          const newData = prev.length > 600 ? prev.slice(-599) : prev
+          // Keep only last ~600 ticks OR simply append.
+          // Since we want full history, maybe we shouldn't slice excessively if the user wants to scroll back?
+          // But performance...
+          // For now, let's keep it uncapped or cap at a large number (e.g. 100k) if needed.
+          // The previous code sliced at 600. The user complained about data cutoff.
+          // Let's NOT slice for now, or slice at a much larger number (e.g. 86400).
+          const newData = prev.length > 90000 ? prev.slice(-86400) : prev
           return [...newData, newTick]
         } else if (newTick.time === last.time) {
           const copy = [...prev]

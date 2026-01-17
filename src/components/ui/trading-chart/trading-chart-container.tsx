@@ -14,13 +14,10 @@ export const TradingChartContainer = () => {
   const [isDemo, setIsDemo] = useState(false)
   const [isPending] = useTransition()
 
-  // Always call both hooks, but control execution via enabled flag
-  // This ensures hook order is consistent
   const { data: realTicks } = useChartData(interval, !isDemo)
   const { data: mockTicks } = useMockChartData(interval, isDemo)
 
   const rawTicks = isDemo ? mockTicks : realTicks
-  // const isLoading = isDemo ? isMockLoading : isRealLoading
 
   const intervalSeconds = useMemo(() => {
     // Basic Parsing for now, assuming valid keys from INTERVAL_SECONDS
@@ -37,7 +34,6 @@ export const TradingChartContainer = () => {
     return candlesToChart(padded)
   }, [rawTicks, intervalSeconds])
 
-  // Find the current/last candle for the real-time update prop
   const currentCandle =
     chartData.length > 0 ? chartData[chartData.length - 1] : undefined
 
