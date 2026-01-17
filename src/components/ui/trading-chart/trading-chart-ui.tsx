@@ -55,7 +55,6 @@ export const TradingChartUI = ({
   const [chartData, setChartData] = useState<Array<ChartCandle>>(initialData)
 
   const [chartType, setChartType] = useState<ChartType>('candlestick')
-  const [isPlaying, setIsPlaying] = useState(true)
   const [priceChange, setPriceChange] = useState<number>(0)
 
   // ... (rest of the component logic kept same until return)
@@ -129,7 +128,7 @@ export const TradingChartUI = ({
 
   // Real-time updates from aggregated candle
   useEffect(() => {
-    if (!newCandle || !isPlaying) return
+    if (!newCandle) return
 
     const isUpdatingExistingCandle =
       newCandle.time === lastCandleTimeRef.current
@@ -206,7 +205,7 @@ export const TradingChartUI = ({
         return [...prevData, newCandle]
       }
     })
-  }, [newCandle, isPlaying])
+  }, [newCandle])
 
   // Calculate price change
   useEffect(() => {
@@ -413,19 +412,6 @@ export const TradingChartUI = ({
               <CandlestickChart className="size-4" />
             ) : (
               <LineChart className="size-4" />
-            )}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="text-neutral-300 hover:text-white"
-          >
-            {isPlaying ? (
-              <Pause className="size-4" />
-            ) : (
-              <Play className="size-4" />
             )}
           </Button>
 
