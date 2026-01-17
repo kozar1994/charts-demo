@@ -33,6 +33,8 @@ interface TradingChartUIProps {
   assetDescription?: string
   interval: TimeInterval
   onIntervalChange: (interval: TimeInterval) => void
+  isDemo?: boolean
+  onToggleDemo?: () => void
 }
 
 type ChartType = 'candlestick' | 'line'
@@ -45,6 +47,8 @@ export const TradingChartUI = ({
   assetDescription = 'Short description',
   interval,
   onIntervalChange,
+  isDemo = false,
+  onToggleDemo,
 }: TradingChartUIProps) => {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -53,6 +57,8 @@ export const TradingChartUI = ({
   const [chartType, setChartType] = useState<ChartType>('candlestick')
   const [isPlaying, setIsPlaying] = useState(true)
   const [priceChange, setPriceChange] = useState<number>(0)
+
+  // ... (rest of the component logic kept same until return)
 
   // Series refs
   const candlestickSeriesRef = useRef<any>(null)
@@ -278,9 +284,16 @@ export const TradingChartUI = ({
       priceFormat: {
         type: 'volume',
       },
-      priceScaleId: '',
+      priceScaleId: 'volume',
     })
     volumeSeriesRef.current = volumeSeries
+
+    chart.priceScale('volume').applyOptions({
+      scaleMargins: {
+        top: 0.8, // Push volume down to bottom 20%
+        bottom: 0,
+      },
+    })
 
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
@@ -363,6 +376,27 @@ export const TradingChartUI = ({
         </div>
 
         <div className="bg-neutral-900 px-4 py-3 flex items-center justify-end gap-3 ">
+          {onToggleDemo && (
+            <div className="flex items-center space-x-2 mr-2 bg-neutral-800 rounded-md p-1 border border-neutral-700">
+              <Button
+                variant={!isDemo ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={isDemo ? onToggleDemo : undefined}
+                className={`h-7 px-3 text-xs ${!isDemo ? 'bg-neutral-700 text-white' : 'text-neutral-400 hover:text-white'}`}
+              >
+                Real
+              </Button>
+              <Button
+                variant={isDemo ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={!isDemo ? onToggleDemo : undefined}
+                className={`h-7 px-3 text-xs ${isDemo ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'text-neutral-400 hover:text-white'}`}
+              >
+                Demo
+              </Button>
+            </div>
+          )}
+
           <Button
             variant="ghost"
             size="icon-sm"

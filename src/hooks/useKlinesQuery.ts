@@ -116,10 +116,14 @@ const fetchKlines = async (interval: string): Promise<Array<Tick>> => {
  * React Query hook for fetching tick data
  * Returns individual trade operations, not pre-built candles
  */
-export const useKlinesQuery = (interval: string = '30m') => {
+export const useKlinesQuery = (
+  interval: string = '30m',
+  options: { enabled?: boolean } = {},
+) => {
   return useQuery({
     queryKey: ['klines', CHART_PAIR_ID, interval],
     queryFn: () => fetchKlines(interval),
     placeholderData: keepPreviousData,
+    enabled: options.enabled,
   })
 }

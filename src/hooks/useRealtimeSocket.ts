@@ -11,7 +11,10 @@ import type { Tick } from '@/types/chart'
  *
  * @param onUpdate - Callback function to handle incoming ticks
  */
-export const useRealtimeSocket = (onUpdate: (tick: Tick) => void) => {
+export const useRealtimeSocket = (
+  onUpdate: (tick: Tick) => void,
+  enabled: boolean = true,
+) => {
   const socketRef = useRef<Socket | null>(null)
   const onUpdateRef = useRef(onUpdate)
 
@@ -20,6 +23,8 @@ export const useRealtimeSocket = (onUpdate: (tick: Tick) => void) => {
   }, [onUpdate])
 
   useEffect(() => {
+    if (!enabled) return
+
     // Initialize socket connection
     const socket = io(WS_URL, {
       transports: ['websocket'],
@@ -65,5 +70,5 @@ export const useRealtimeSocket = (onUpdate: (tick: Tick) => void) => {
       socket.disconnect()
       socketRef.current = null
     }
-  }, []) // Empty dependency array to ensure connection only happens once
+  }, [enabled]) // Connect/Disconnect when enabled changes
 }

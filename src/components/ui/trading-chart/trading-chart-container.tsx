@@ -5,14 +5,22 @@ import { aggregateCandles, padCandlesWithEmpty } from '@/lib/chart-aggregator'
 import { INTERVAL_SECONDS, VISIBLE_CANDLES_COUNT } from '@/constants/chart'
 import { candlesToChart } from '@/utils/formatters'
 import { useChartData } from '@/hooks/useChartData'
+import { useMockChartData } from '@/hooks/useMockChartData'
 
 type IntervalType = keyof typeof INTERVAL_SECONDS
 
 export const TradingChartContainer = () => {
-  const [interval, setInterval] = useState<IntervalType>('30s')
-  const [isPending, startTransition] = useTransition()
+  const [interval, setInterval] = useState<IntervalType>('5s')
+  const [isDemo, setIsDemo] = useState(false)
+  const [isPending] = useTransition()
 
-  const { data: rawTicks } = useChartData(interval)
+  // Always call both hooks, but control execution via enabled flag
+  // This ensures hook order is consistent
+  const { data: realTicks } = useChartData(interval, !isDemo)
+  const { data: mockTicks } = useMockChartData(interval, isDemo)
+
+  const rawTicks = isDemo ? mockTicks : realTicks
+  // const isLoading = isDemo ? isMockLoading : isRealLoading
 
   const intervalSeconds = useMemo(() => {
     // Basic Parsing for now, assuming valid keys from INTERVAL_SECONDS
@@ -39,14 +47,16 @@ export const TradingChartContainer = () => {
         isPending ? 'opacity-70 transition-opacity' : 'transition-opacity'
       }
     >
-      <pre>{JSON.stringify(currentCandle, null, 2)}</pre>
+      {/* <pre>{JSON.stringify(currentCandle, null, 2)}</pre> */}
       <TradingChartUI
         initialData={chartData}
         newCandle={currentCandle}
-        assetName="BTC/USD"
-        assetDescription="Bitcoin / US Dollar"
+        assetName="Asset name"
+        assetDescription="Short description"
         interval={interval as any}
         onIntervalChange={(i) => setInterval(i as IntervalType)}
+        isDemo={isDemo}
+        onToggleDemo={() => setIsDemo(!isDemo)}
       />
     </div>
   )
